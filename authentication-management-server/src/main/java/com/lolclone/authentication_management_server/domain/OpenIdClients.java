@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.lolclone.authentication_management_server.domain.entity.SocialType;
 import com.lolclone.common_module.commonexception.BadRequestException;
 import com.lolclone.common_module.exception.domain.ExceptionType;
-import com.lolclone.database_server.authenticationserver.domain.SocialType;
 
 import lombok.extern.slf4j.Slf4j;
 

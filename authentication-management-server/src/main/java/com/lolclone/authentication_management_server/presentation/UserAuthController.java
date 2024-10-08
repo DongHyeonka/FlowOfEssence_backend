@@ -2,6 +2,7 @@ package com.lolclone.authentication_management_server.presentation;
 
 import java.util.UUID;
 
+import com.lolclone.authentication_management_server.domain.entity.SocialType;
 import com.lolclone.authentication_management_server.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lolclone.common_module.authenticationserver.annotation.UserAuth;
 import com.lolclone.authentication_management_server.application.command.UserAuthFacadeService;
 import com.lolclone.common_module.authenticationserver.domain.authentication.MemberAuthentication;
-import com.lolclone.database_server.authenticationserver.domain.SocialType;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -7,8 +7,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EntityScan(basePackages = {"com.lolclone.database_server.authenticationserver.domain"})
-@EnableJpaRepositories(basePackages = {"com.lolclone.database_server"})
 @ComponentScan(basePackages = {"com.lolclone.authentication_management_server", "com.lolclone.common_module"})
 public class AuthenticationManagementServerApplication {
 
