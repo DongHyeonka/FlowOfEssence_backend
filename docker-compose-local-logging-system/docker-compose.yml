@@ -1,0 +1,350 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init/config:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend
+  
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - backend
+  
+  zookeeper-1:
+    image: zookeeper:latest
+    container_name: zookeeper-1
+    hostname: zookeeper-1
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888;2181 server.2=zookeeper-2:2888:3888;2181 server.3=zookeeper-3:2888:3888;2181
+    volumes:
+      - zookeeper-1-data:/var/lib/zookeeper/data
+      - zookeeper-1-logs:/var/lib/zookeeper/log
+    networks:
+      - backend
+
+  zookeeper-2:
+    image: zookeeper:latest
+    container_name: zookeeper-2
+    hostname: zookeeper-2
+    ports:
+      - "2182:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888;2181 server.2=zookeeper-2:2888:3888;2181 server.3=zookeeper-3:2888:3888;2181
+    volumes:
+      - zookeeper-2-data:/var/lib/zookeeper/data
+      - zookeeper-2-logs:/var/lib/zookeeper/log
+    networks:
+      - backend
+
+  zookeeper-3:
+    image: zookeeper:latest
+    container_name: zookeeper-3
+    hostname: zookeeper-3
+    ports:
+      - "2183:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888;2181 server.2=zookeeper-2:2888:3888;2181 server.3=zookeeper-3:2888:3888;2181
+    volumes:
+      - zookeeper-3-data:/var/lib/zookeeper/data
+      - zookeeper-3-logs:/var/lib/zookeeper/log
+    networks:
+      - backend
+  
+  kafka-1:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-1
+    hostname: kafka-1
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    ports:
+      - "9092:9092"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - kafka-1-data:/var/lib/kafka/data
+    networks:
+      - backend
+  
+  kafka-2:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-2
+    hostname: kafka-2
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    ports:
+      - "9093:9092"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - kafka-2-data:/var/lib/kafka/data
+    networks:
+      - backend
+
+  kafka-3:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-3
+    hostname: kafka-3
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+    ports:
+      - "9094:9092"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - kafka-3-data:/var/lib/kafka/data
+    networks:
+      - backend
+
+  hbase:
+    image: harisekhon/hbase:latest
+    container_name: hbase
+    hostname: hbase
+    environment:
+      - HBASE_MANAGES_ZK=true
+    ports:
+      - "16000:16000"  # HBase Master
+      - "16010:16010"  # RegionServer
+      - "16020:16020"
+    expose:
+      - "2184"
+    volumes:
+      - hbase-data:/hbase/data
+    networks:
+      - backend
+
+  pinpoint-mysql:
+    image: pinpointdocker/pinpoint-mysql:latest
+    container_name: pinpoint-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: pinpoint
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - backend
+
+  pinpoint-collector:
+    image: pinpointdocker/pinpoint-collector:latest
+    container_name: pinpoint-collector
+    depends_on:
+      - hbase
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - pinpoint-mysql
+    environment:
+      - COLLECTOR_STORAGE=hbase
+      - HBASE_ZOOKEEPER_QUORUM=hbase
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-1:9092,kafka-2:9093,kafka-3:9094
+      - SPRING_DATASOURCE_URL=jdbc:mysql://pinpoint-mysql:3306/pinpoint?useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=1234
+    ports:
+      - "9994:9994"
+    networks:
+      - backend
+  
+  pinpoint-web:
+    image: pinpointdocker/pinpoint-web:latest
+    container_name: pinpoint-web
+    depends_on:
+      - pinpoint-collector
+      - hbase
+      - pinpoint-mysql
+    environment:
+      - WEB_COLLECTOR_IP=pinpoint-collector
+      - WEB_COLLECTOR_PORT=9994
+      - HBASE_ZOOKEEPER_QUORUM=hbase
+      - SPRING_DATASOURCE_URL=jdbc:mysql://pinpoint-mysql:3306/pinpoint?useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=1234
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+
+  pinpoint-flink:
+    image: pinpoint-flink
+    container_name: pinpoint-flink
+    depends_on:
+      - hbase
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - pinpoint-mysql
+    environment:
+      SPRING_PROFILES_ACTIVE: release
+      HBASE_ZOOKEEPER_QUORUM: hbase
+      KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9093,kafka-3:9094
+      SPRING_DATASOURCE_URL: jdbc:mysql://pinpoint-mysql:3306/pinpoint?useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: '1234'
+    networks:
+      - backend
+
+  logstash:
+    image: logstash:7.17.24
+    container_name: logstash
+    volumes:
+      - ./logstash/config/logstash-config.conf:/usr/share/logstash/pipeline/logstash-config.conf
+      - ./logstash/pipeline/:/usr/share/logstash/pipeline/
+    ports:
+      - "5044:5044"  # Beats input
+      - "9600:9600"  # Monitoring
+    networks:
+      - backend
+    depends_on:
+      - elasticsearch
+  
+  filebeat:
+    image: filebeat-custom
+    container_name: filebeat
+    volumes:
+      - /var/log:/var/log:ro
+    networks:
+      - backend
+    depends_on:
+      - logstash
+  
+  kibana:
+    image: kibana:7.17.24
+    container_name: kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - backend
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: bitnami/elasticsearch:latest
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/bitnami/elasticsearch
+    networks:
+      - backend
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/config:/etc/prometheus
+      - ./prometheus/volume:/prometheus
+    command:
+      - '--web.enable-lifecycle'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - backend
+    depends_on:
+      - prometheus
+  
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  zookeeper-1-data:
+  zookeeper-1-logs:
+  zookeeper-2-data:
+  zookeeper-2-logs:
+  zookeeper-3-data:
+  zookeeper-3-logs:
+  kafka-1-data:
+  kafka-2-data:
+  kafka-3-data:
+  hbase-zookeeper-data:
+  hbase-zookeeper-logs:
+  elasticsearch-data:
+  hbase-data:
+  grafana-data:
+  postgres-data:
+  redis-data:
+  mongo-data:
+  mysql-data:

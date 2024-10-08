@@ -1,0 +1,111 @@
+version: '3.7'
+services:
+  zookeeper-1:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-1-data:/var/lib/zookeeper/data
+      - zookeeper-1-logs:/var/lib/zookeeper/log
+
+  zookeeper-2:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+    ports:
+      - "2182:2181"
+    volumes:
+      - zookeeper-2-data:/var/lib/zookeeper/data
+      - zookeeper-2-logs:/var/lib/zookeeper/log
+
+  zookeeper-3:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SERVER_ID: 3
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+    ports:
+      - "2183:2181"
+    volumes:
+      - zookeeper-3-data:/var/lib/zookeeper/data
+      - zookeeper-3-logs:/var/lib/zookeeper/log
+  
+  kafka-1:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
+    ports:
+      - "9092:9092"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - kafka-1-data:/var/lib/kafka/data
+  
+  kafka-2:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092
+    ports:
+      - "9093:9092"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - kafka-2-data:/var/lib/kafka/data
+
+  kafka-3:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9092
+    ports:
+      - "9094:9092"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - kafka-3-data:/var/lib/kafka/data
+
+volumes:
+  zookeeper-1-data:
+  zookeeper-1-logs:
+  zookeeper-2-data:
+  zookeeper-2-logs:
+  zookeeper-3-data:
+  zookeeper-3-logs:
+  kafka-1-data:
+  kafka-2-data:
+  kafka-3-data:
