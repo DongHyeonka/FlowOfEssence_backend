@@ -1,0 +1,9 @@
+api:
+  uri: http://localhost:6000
+
+logging:
+  level:
+    org:
+      hibernate:
+        type: info
+        level: info

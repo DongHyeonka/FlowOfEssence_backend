@@ -1,12 +1,16 @@
 dependencies {
-    //authentication-management-server
-    implementation project(':authentication-management-server')
     //common-module
-    implementation project(':common-module')
+    implementation (project(':common-module')) {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
+    }
+    // WebFlux
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
     //Cloud Gateway
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
     //Resilience4j
     implementation 'io.github.resilience4j:resilience4j-spring-cloud2:1.7.1'
+    //Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
 
 dependencyManagement {
